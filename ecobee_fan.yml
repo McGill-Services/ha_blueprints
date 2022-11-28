@@ -40,7 +40,7 @@ trigger:
   - platform: template
     value_template: >-
       {% set ns = namespace(values=[]) %}
-      {% for entity_id in sensors.entity_id %}
+      {% for entity_id in sensors %}
         {% set ns.values = ns.values + [(states(entity_id) | float(None))] %}
       {% endfor %}
       {% set range = ns.values | select('number') | list %}
@@ -53,7 +53,7 @@ action:
     data:
       fan_mode: >-
         {% set ns = namespace(values=[]) %}
-        {% for entity_id in sensors.entity_id %}
+        {% for entity_id in sensors %}
           {% set ns.values = ns.values + [(states(entity_id) | float(None))] %}
         {% endfor %}
         {% set range = ns.values | select('number') | list %}
