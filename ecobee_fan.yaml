@@ -1,0 +1,66 @@
+blueprint:
+  name: Ecobee Fan
+  description: Turn on the system fan base on sensor divergence
+  #source_url: ''
+  domain: automation
+  input:
+    in_thermostat:
+      name: Ecobee Thermostat
+      description: >
+        The ecobee thermostat entity
+      selector:
+        entity:
+          integration: ecobee
+          domain: climate
+    in_threshold:
+      name: Temperature Threshold
+      description: >
+        When the sensors' temperatures diverge by more than this value, the fan will run
+      selector:
+        number:
+          min: 1
+          max: 10
+          unit_of_measurement: Δ°
+      default: 3
+    in_sensors:
+      name: Temperature Sensors
+      selector:
+        target:
+          entity:
+            integration: ecobee
+            domain: sensor
+            device_class: temperature
+
+variables:
+  thermostat: !input in_thermostat
+  threshold: !input in_threshold
+  sensors: !input in_sensors
+
+trigger:
+  - platform: template
+    value_template: >-
+      {% set ns = namespace(values=[]) %}
+      {% for entity_id in sensors %}
+        {% set ns.values = ns.values + [(states(entity_id) | float(None))] %}
+      {% endfor %}
+      {% set range = ns.values | select('number') | list %}
+      {% set spread = (range|max) - (range|min) %}
+      {{ spread > (threshold - 1.0) }}
+action:
+  - service: climate.set_fan_mode
+    target:
+      entity_id: '{{ thermostat }}'
+    data:
+      fan_mode: >-
+        {% set ns = namespace(values=[]) %}
+        {% for entity_id in sensors %}
+          {% set ns.values = ns.values + [(states(entity_id) | float(None))] %}
+        {% endfor %}
+        {% set range = ns.values | select('number') | list %}
+        {% set spread = (range|max) - (range|min) %}
+        {%- if spread > threshold -%}
+          on
+        {%- else -%}
+          auto
+        {%- endif -%}
+mode: restart
