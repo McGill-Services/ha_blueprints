@@ -1,5 +1,5 @@
 blueprint:
-  name: Ecobee Mix
+  name: Ecobee Fan
   description: Turn on the system fan base on sensor divergence
   #source_url: ''
   domain: automation
